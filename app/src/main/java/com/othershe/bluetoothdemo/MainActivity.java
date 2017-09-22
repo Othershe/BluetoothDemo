@@ -112,6 +112,20 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
         mDevicesList.setAdapter(mDevicesAdapter);
     }
 
+    /**
+     * 向蓝牙设备注册监听实现实时读取蓝牙设备的数据
+     * 当硬件的数据改变时，主动往手机发送数据
+     */
+    public void setCharacteristicNotification() {
+        BluetoothGattService service = mCurrentGatt.getService(UUID.fromString("SERVICE_UUID"));
+        BluetoothGattCharacteristic characteristic = service.getCharacteristic(UUID.fromString("CHARACTER_UUID"));
+        mCurrentGatt.setCharacteristicNotification(characteristic, true);
+
+        BluetoothGattDescriptor descriptor = characteristic.getDescriptor(UUID.fromString("CLIENT_CHARACTERISTIC_CONFIG_DESCRIPTOR_UUID"));
+        descriptor.setValue(BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE);
+        mCurrentGatt.writeDescriptor(descriptor);
+    }
+
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
@@ -200,9 +214,15 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
             }
         }
 
+        /**
+         * 当硬件的数据改变时，主动往手机发送数据会在这里接收到
+         * @param gatt
+         * @param characteristic
+         */
         @Override
         public void onCharacteristicChanged(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic) {
             super.onCharacteristicChanged(gatt, characteristic);
+            byte[] data = characteristic.getValue();
         }
 
         @Override
